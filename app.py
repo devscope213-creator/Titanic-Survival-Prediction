@@ -1,19 +1,25 @@
-
 import streamlit as st
 import joblib
 import numpy as np
 import base64
+
 # ---------------- Page Config ----------------
 st.set_page_config(
     page_title="Titanic Survival Prediction",
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
 # ---------------- Custom CSS ----------------
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
    
+    /* Global Styles for Consistent Text Sizing */
+    * {
+        font-family: 'Poppins', sans-serif !important;
+    }
+    
     .main {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         font-family: 'Poppins', sans-serif;
@@ -23,16 +29,60 @@ st.markdown("""
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         font-family: 'Poppins', sans-serif;
     }
-   
+    
+    /* Consistent Text Sizing Across Devices */
+    html {
+        font-size: 16px;
+    }
+    
+    body {
+        font-size: 1rem;
+        line-height: 1.6;
+    }
+    
+    /* Responsive Font Sizes */
+    h1 {
+        font-size: clamp(2rem, 4vw, 3rem) !important;
+    }
+    
+    h2 {
+        font-size: clamp(1.5rem, 3vw, 2rem) !important;
+    }
+    
+    h3 {
+        font-size: clamp(1.25rem, 2.5vw, 1.5rem) !important;
+    }
+    
+    p, div, span {
+        font-size: clamp(0.9rem, 1.5vw, 1rem) !important;
+    }
+    
+    /* Streamlit Specific Elements */
+    .stMarkdown {
+        font-size: clamp(0.9rem, 1.5vw, 1rem) !important;
+    }
+    
+    .stSelectbox, .stSlider, .stNumberInput {
+        font-size: clamp(0.9rem, 1.5vw, 1rem) !important;
+    }
+    
+    .stButton > button {
+        font-size: clamp(1rem, 1.8vw, 1.1rem) !important;
+    }
+    
+    /* Card and Container Responsive Width */
     .card {
         background-color: rgba(255, 255, 255, 0.95);
         border-radius: 25px;
-        padding: 35px;
+        padding: clamp(20px, 3vw, 35px);
         box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
         backdrop-filter: blur(10px);
         border: 1px solid rgba(255, 255, 255, 0.25);
         margin-bottom: 30px;
         transition: transform 0.3s ease, box-shadow 0.3s ease;
+        max-width: 100%;
+        width: 100%;
+        box-sizing: border-box;
     }
    
     .card:hover {
@@ -46,18 +96,20 @@ st.markdown("""
         -webkit-text-fill-color: transparent;
         font-weight: 800;
         text-align: center;
-        margin-bottom: 30px;
-        font-size: 3rem;
+        margin-bottom: clamp(20px, 3vw, 30px);
+        font-size: clamp(2rem, 4vw, 3rem);
         text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        line-height: 1.2;
     }
    
     .subtitle {
         color: #2c3e50;
         font-weight: 700;
-        margin-bottom: 20px;
-        font-size: 1.6rem;
+        margin-bottom: clamp(15px, 2vw, 20px);
+        font-size: clamp(1.2rem, 2.5vw, 1.6rem);
         border-left: 5px solid #3498db;
-        padding-left: 15px;
+        padding-left: clamp(10px, 2vw, 15px);
+        line-height: 1.3;
     }
    
     .stButton>button {
@@ -65,11 +117,11 @@ st.markdown("""
         color: white;
         border: none;
         border-radius: 15px;
-        padding: 15px 30px;
+        padding: clamp(12px, 2vw, 15px) clamp(20px, 3vw, 30px);
         font-weight: 700;
         width: 100%;
         transition: all 0.4s ease;
-        font-size: 1.1rem;
+        font-size: clamp(1rem, 1.8vw, 1.1rem);
         box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
     }
    
@@ -84,7 +136,8 @@ st.markdown("""
         margin-bottom: 10px;
         display: flex;
         align-items: center;
-        font-size: 1.1rem;
+        font-size: clamp(1rem, 1.8vw, 1.1rem);
+        line-height: 1.4;
     }
    
     .help-icon {
@@ -93,12 +146,12 @@ st.markdown("""
         cursor: pointer;
         position: relative;
         display: inline-block;
-        font-size: 0.9rem;
+        font-size: clamp(0.8rem, 1.5vw, 0.9rem);
     }
    
     .help-icon .tooltip {
         visibility: hidden;
-        width: 250px;
+        width: min(250px, 90vw);
         background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
         color: white;
         text-align: center;
@@ -111,10 +164,11 @@ st.markdown("""
         transform: translateX(-50%);
         opacity: 0;
         transition: all 0.3s ease;
-        font-size: 0.85rem;
+        font-size: clamp(0.8rem, 1.5vw, 0.85rem);
         font-weight: 400;
         box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         line-height: 1.4;
+        word-wrap: break-word;
     }
    
     .help-icon:hover .tooltip {
@@ -126,7 +180,7 @@ st.markdown("""
     .success-box {
         background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
         color: white;
-        padding: 25px;
+        padding: clamp(20px, 3vw, 25px);
         border-radius: 20px;
         text-align: center;
         margin-top: 25px;
@@ -138,7 +192,7 @@ st.markdown("""
     .danger-box {
         background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
         color: white;
-        padding: 25px;
+        padding: clamp(20px, 3vw, 25px);
         border-radius: 20px;
         text-align: center;
         margin-top: 25px;
@@ -155,19 +209,20 @@ st.markdown("""
     .creator-card {
         display: flex;
         align-items: center;
-        gap: 25px;
+        gap: clamp(15px, 3vw, 25px);
         margin-bottom: 30px;
         padding: 20px;
         background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
         border-radius: 20px;
         box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        flex-wrap: wrap;
     }
    
     .creator-img {
         border-radius: 50%;
         border: 5px solid #3498db;
-        width: 140px;
-        height: 140px;
+        width: clamp(100px, 20vw, 140px);
+        height: clamp(100px, 20vw, 140px);
         object-fit: cover;
         box-shadow: 0 5px 15px rgba(52, 152, 219, 0.3);
     }
@@ -175,7 +230,7 @@ st.markdown("""
     .contact-links {
         display: flex;
         flex-wrap: wrap;
-        gap: 15px;
+        gap: clamp(10px, 2vw, 15px);
         margin-top: 20px;
     }
    
@@ -185,17 +240,18 @@ st.markdown("""
         justify-content: center;
         text-decoration: none;
         font-weight: 700;
-        padding: 12px 25px;
+        padding: clamp(10px, 2vw, 12px) clamp(20px, 3vw, 25px);
         border-radius: 50px;
         transition: all 0.4s ease;
         color: white;
-        min-width: 160px;
+        min-width: min(160px, 40vw);
         box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        font-size: clamp(0.9rem, 1.8vw, 1rem);
     }
    
     .contact-links img {
-        width: 22px;
-        margin-right: 10px;
+        width: clamp(18px, 4vw, 22px);
+        margin-right: 8px;
         filter: brightness(0) invert(1);
     }
    
@@ -237,7 +293,7 @@ st.markdown("""
         font-weight: 800;
         text-align: center;
         margin-bottom: 35px;
-        font-size: 2rem;
+        font-size: clamp(1.5rem, 3vw, 2rem);
         background: linear-gradient(135deg, #3498db 0%, #2ecc71 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
@@ -250,10 +306,11 @@ st.markdown("""
         margin: 10px 0;
         border-left: 4px solid #3498db;
         backdrop-filter: blur(5px);
+        font-size: clamp(0.8rem, 1.5vw, 0.9rem);
     }
    
     .feature-icon {
-        font-size: 2rem;
+        font-size: clamp(1.5rem, 3vw, 2rem);
         margin-bottom: 15px;
         text-align: center;
     }
@@ -263,32 +320,80 @@ st.markdown("""
         justify-content: space-around;
         text-align: center;
         margin: 25px 0;
+        flex-wrap: wrap;
+        gap: 15px;
     }
    
     .stat-item {
         padding: 15px;
+        flex: 1;
+        min-width: 120px;
     }
    
     .stat-number {
-        font-size: 2.5rem;
+        font-size: clamp(1.8rem, 4vw, 2.5rem);
         font-weight: 800;
         color: #2c3e50;
+        line-height: 1.2;
     }
    
     .stat-label {
-        font-size: 0.9rem;
+        font-size: clamp(0.8rem, 1.5vw, 0.9rem);
         color: #7f8c8d;
         font-weight: 600;
+        line-height: 1.3;
     }
    
     .watermark {
         text-align: center;
         color: rgba(255,255,255,0.7);
-        font-size: 0.8rem;
+        font-size: clamp(0.7rem, 1.5vw, 0.8rem);
         margin-top: 30px;
+    }
+    
+    /* Mobile Optimizations */
+    @media (max-width: 768px) {
+        .card {
+            margin: 10px;
+            padding: 15px;
+        }
+        
+        .creator-card {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .stats-container {
+            flex-direction: column;
+        }
+        
+        .contact-links {
+            justify-content: center;
+        }
+        
+        .contact-links a {
+            min-width: 140px;
+        }
+    }
+    
+    /* Dark Theme Support */
+    @media (prefers-color-scheme: dark) {
+        .card {
+            background-color: rgba(30, 30, 30, 0.95);
+            color: #ffffff;
+        }
+        
+        .input-label {
+            color: #ffffff;
+        }
+        
+        .subtitle {
+            color: #ffffff;
+        }
     }
 </style>
 """, unsafe_allow_html=True)
+
 # ---------------- About Page ----------------
 def about_page():
     st.markdown("<div class='card'>", unsafe_allow_html=True)
@@ -378,6 +483,7 @@ def about_page():
     )
    
     st.markdown("</div>", unsafe_allow_html=True)
+
 # ---------------- Helper Function for Input Labels ----------------
 def input_with_help(label, help_text):
     return f"""
@@ -388,11 +494,12 @@ def input_with_help(label, help_text):
         </div>
     </div>
     """
+
 # ---------------- Main Prediction Page ----------------
 def main():
     st.markdown("<div class='card'>", unsafe_allow_html=True)
     st.markdown("<h1 class='title'>Titanic Survival Prediction</h1>", unsafe_allow_html=True)
-    st.markdown("<p style='text-align: center; font-size: 1.2rem; color: #7f8c8d;'>Fill in the passenger details below to discover their survival chances</p>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; font-size: clamp(1rem, 2vw, 1.2rem); color: #7f8c8d;'>Fill in the passenger details below to discover their survival chances</p>", unsafe_allow_html=True)
    
     with st.form("titanic_form"):
         col1, col2 = st.columns(2)
@@ -463,6 +570,7 @@ def main():
         )
         submit_button = st.form_submit_button("Predict Survival Chance")
     st.markdown("</div>", unsafe_allow_html=True)
+    
     # Load Model and Make Prediction
     try:
         model = joblib.load("titanic_model.pkl")
@@ -477,12 +585,14 @@ def main():
         """)
         st.info("**Tip:** If you don't have a model yet, you can train one using the Titanic dataset from Kaggle.")
         return
+    
     if submit_button:
         # Process inputs
         sex_val = 1 if sex == "Male" else 0
         embarked_map = {"Cherbourg (C)": 0, "Queenstown (Q)": 1, "Southampton (S)": 2}
         embarked_val = embarked_map[embarked]
         features = np.array([[pclass, sex_val, age, fare, sibsp, parch, embarked_val]])
+        
         try:
             prediction = model.predict(features)[0]
             probability = model.predict_proba(features)[0]
@@ -529,9 +639,11 @@ def main():
         except Exception as e:
             st.error(f"**Prediction Error:** {str(e)}")
             st.info("Please check that your model is compatible with the input features.")
+
 # ---------------- Sidebar Navigation ----------------
 st.sidebar.markdown("<div class='sidebar-title'>Navigation</div>", unsafe_allow_html=True)
 page = st.sidebar.radio("", ["Prediction", "About"], label_visibility="collapsed")
+
 # Sidebar Facts Section
 st.sidebar.markdown("---")
 st.sidebar.markdown("### Titanic Statistics")
@@ -549,6 +661,7 @@ st.sidebar.markdown("""
     <strong>Children Under 16:</strong> 52% survival rate
 </div>
 """, unsafe_allow_html=True)
+
 st.sidebar.markdown("---")
 st.sidebar.markdown("### Model Features")
 st.sidebar.markdown("""
@@ -559,11 +672,14 @@ st.sidebar.markdown("""
 - Family Size
 - Embarkation Port
 """)
+
 st.sidebar.markdown("---")
 st.sidebar.markdown('<div class="watermark">Built by Mostafa Arafat</div>', unsafe_allow_html=True)
+
 # ---------------- Run App ----------------
 if page == "Prediction":
     main()
 else:
     about_page()
+
 
