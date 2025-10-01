@@ -452,7 +452,7 @@ def about_page():
         *AI Visionary & Tech Innovator*
        
         Passionate student and AI enthusiast dedicated to shaping the future of predictive technology.
-        Founder & Team Lead of **[Dev Scope](http://dev-scope-tech.netlify.app/)** -
+        Founder & Team Lead of **[Dev Scope](https://dev-scope-tech-site.netlify.app/)** -
         where innovation meets execution.
        
         **Mission:** Making advanced AI accessible and understandable for everyone.
@@ -681,5 +681,6 @@ if page == "Prediction":
     main()
 else:
     about_page()
+
 
 
